@@ -1,0 +1,160 @@
+// project structure
+AIUrbanApp/
+|-- app/
+|   |-- src/
+|       |-- main/
+|           |-- java/
+|               |-- com.example.ecoNano/
+|                   |-- MainActivity.kt
+|                   |-- ApiClient.kt
+|                   |-- PollutionDataService.kt
+|                   |-- PollutionData.kt
+|           |-- res/
+|               |-- layout/
+|                   |-- activity_main.xml
+|               |-- values/
+|                   |-- strings.xml
+|                   |-- colors.xml
+|                   |-- styles.xml
+|           |-- AndroidManifest.xml
+|-- build.gradle (Project)
+|-- settings.gradle
+|-- build.gradle (App)
+
+
+
+//MainActivity.kt
+package com.example.ecoNano
+
+import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+
+class MainActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        // Fetch pollution data
+        fetchPollutionData()
+    }
+
+    private fun fetchPollutionData() {
+        val apiService = ApiClient.getClient().create(PollutionDataService::class.java)
+        val call = apiService.getPollutionData("your_api_key")
+
+        call.enqueue(object : Callback<PollutionData> {
+            override fun onResponse(call: Call<PollutionData>, response: Response<PollutionData>) {
+                if (response.isSuccessful) {
+                    val data = response.body()
+                    // Update UI with the pollution data
+                }
+            }
+
+            override fun onFailure(call: Call<PollutionData>, t: Throwable) {
+                // Handle API call failure
+            }
+        })
+    }
+}
+
+//ApiClient.kt
+package com.example.ecoNano
+
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+
+object ApiClient {
+    private const val BASE_URL = "https://api.pollutiondata.com/"
+
+    fun getClient(): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+}
+
+//PollutionDataService.kt
+package com.example.ecoNano
+
+import retrofit2.Call
+import retrofit2.http.GET
+import retrofit2.http.Query
+
+interface PollutionDataService {
+    @GET("pollution")
+    fun getPollutionData(@Query("apiKey") apiKey: String): Call<PollutionData>
+}
+
+//PollutionData.kt
+package com.example.ecoNano
+
+data class PollutionData(
+    val level: String,
+    val location: String,
+    val timestamp: String
+)
+
+//activity_main.xml
+<!-- res/layout/activity_main.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/pollutionLevelText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Pollution Level: --"
+        android:textSize="20sp"/>
+
+    <TextView
+        android:id="@+id/locationText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Location: --"
+        android:textSize="18sp"/>
+
+</LinearLayout>
+
+//string.xml
+<!-- res/values/strings.xml -->
+<resources>
+    <string name="app_name">EcoNanO</string>
+    <string name="pollution_level">Pollution Level:</string>
+    <string name="location">Location:</string>
+</resources>
+
+//AndriodManifest.xml
+<!-- app/src/main/AndroidManifest.xml -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.ecoNano">
+
+    <application
+        android:allowBackup="true"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.App">
+        <activity android:name=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+    <!-- Internet permission for API calls -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+</manifest>
+
+//build.gradle
+// app/build.gradle
+dependencies {
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+}
+
